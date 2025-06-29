@@ -15,7 +15,7 @@ function saveQuotes() {
 
 function showRandomQuote() {
   const selectedCategory = categorySelect.value;
-  let filteredQuotes = selectedCategory === "all"
+  const filteredQuotes = selectedCategory === "all"
     ? quotes
     : quotes.filter(q => q.category.toLowerCase() === selectedCategory.toLowerCase());
 
@@ -44,7 +44,6 @@ function createAddQuoteForm() {
   saveQuotes();
   postQuoteToServer(newQuote);
 
-  // Update dropdowns
   [categorySelect, categoryFilter].forEach(select => {
     if (![...select.options].some(opt => opt.value.toLowerCase() === category.toLowerCase())) {
       const option = document.createElement("option");
@@ -56,7 +55,6 @@ function createAddQuoteForm() {
 
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
-
   alert("New quote added!");
   filterQuotes();
 }
@@ -97,8 +95,8 @@ function importFromJsonFile(event) {
 function populateCategories() {
   categorySelect.innerHTML = '<option value="all">All</option>';
   categoryFilter.innerHTML = '<option value="all">All Categories</option>';
-  const categories = [...new Set(quotes.map(q => q.category))];
 
+  const categories = [...new Set(quotes.map(q => q.category))];
   categories.forEach(cat => {
     const option1 = document.createElement("option");
     option1.value = cat;
@@ -136,35 +134,7 @@ function restoreLastQuote() {
   }
 }
 
-// ✅ Fetch quotes from server (sync)
-async function fetchQuotesFromServer() {
-  try {
-    const res = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
-    const data = await res.json();
-    const serverQuotes = data.map(post => ({ text: post.title, category: 'Server' }));
-
-    const existingTexts = new Set(quotes.map(q => q.text));
-    let newQuotesAdded = false;
-
-    serverQuotes.forEach(q => {
-      if (!existingTexts.has(q.text)) {
-        quotes.push(q);
-        newQuotesAdded = true;
-      }
-    });
-
-    if (newQuotesAdded) {
-      saveQuotes();
-      populateCategories();
-      filterQuotes();
-      alert("Quotes synced from server.");
-    }
-  } catch (err) {
-    console.error("Server fetch failed:", err);
-  }
-}
-
-// ✅ Post quotes to server (mock)
+// ✅ Post quote to mock server
 async function postQuoteToServer(quote) {
   try {
     const res = await fetch('https://jsonplaceholder.typicode.com/posts', {
@@ -174,11 +144,41 @@ async function postQuoteToServer(quote) {
       },
       body: JSON.stringify(quote)
     });
-
     const result = await res.json();
     console.log("Posted to server:", result);
-  } catch (error) {
-    console.error("Failed to POST quote:", error);
+  } catch (err) {
+    console.error("POST failed:", err);
+  }
+}
+
+// ✅ Fetch and sync quotes from server
+async function syncQuotes() {
+  try {
+    const res = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
+    const data = await res.json();
+    const serverQuotes = data.map(post => ({
+      text: post.title,
+      category: 'Server'
+    }));
+
+    const existingTexts = new Set(quotes.map(q => q.text));
+    let updated = false;
+
+    serverQuotes.forEach(q => {
+      if (!existingTexts.has(q.text)) {
+        quotes.push(q);
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      saveQuotes();
+      populateCategories();
+      filterQuotes();
+      alert("Quotes synced from server.");
+    }
+  } catch (err) {
+    console.error("Sync failed:", err);
   }
 }
 
@@ -189,5 +189,5 @@ window.addEventListener("DOMContentLoaded", () => {
   populateCategories();
   restoreLastQuote();
   filterQuotes();
-  fetchQuotesFromServer();
+  syncQuotes(); // ✅ <-- this was missing!
 });
