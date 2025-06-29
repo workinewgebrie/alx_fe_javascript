@@ -202,4 +202,15 @@ window.addEventListener("DOMContentLoaded", () => {
   restoreLastQuote();
   filterQuotes();
   fetchQuotesFromServer();
+  // On page load
+window.addEventListener("DOMContentLoaded", () => {
+  populateCategories();
+  restoreLastQuote();
+  filterQuotes();
+  fetchQuotesFromServer();
+
+  // ✅ Periodic sync every 60 seconds
+  setInterval(fetchQuotesFromServer, 60000);  // 60,000 ms = 60 sec
+});
+
 });
