@@ -7,6 +7,7 @@ let quotes = JSON.parse(localStorage.getItem("quotes")) || [
 const quoteDisplay = document.getElementById("quoteDisplay");
 const newQuoteBtn = document.getElementById("newQuote");
 const categorySelect = document.getElementById("categorySelect");
+const categoryFilter = document.getElementById("categoryFilter");  // New dropdown for filtering
 
 function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes));
@@ -32,7 +33,7 @@ function showRandomQuote() {
   quoteDisplay.innerHTML = `"${quote.text}" — <strong>${quote.category}</strong>`;
 }
 
-// Renamed function here:
+// Renamed from addQuote
 function createAddQuoteForm() {
   const text = document.getElementById("newQuoteText").value.trim();
   const category = document.getElementById("newQuoteCategory").value.trim();
@@ -45,6 +46,7 @@ function createAddQuoteForm() {
   quotes.push({ text, category });
   saveQuotes();
 
+  // Update categorySelect dropdown
   const exists = [...categorySelect.options].some(opt => opt.value.toLowerCase() === category.toLowerCase());
   if (!exists) {
     const option = document.createElement("option");
@@ -53,9 +55,20 @@ function createAddQuoteForm() {
     categorySelect.appendChild(option);
   }
 
+  // Update categoryFilter dropdown
+  const existsFilter = [...categoryFilter.options].some(opt => opt.value.toLowerCase() === category.toLowerCase());
+  if (!existsFilter) {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+  }
+
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
+
   alert("New quote added!");
+  filterQuotes();  // Refresh filtered quotes after adding new
 }
 
 function exportToJsonFile() {
@@ -93,14 +106,46 @@ function importFromJsonFile(event) {
 }
 
 function populateCategories() {
+  // Populate categorySelect dropdown
   categorySelect.innerHTML = '<option value="all">All</option>';
+  // Populate categoryFilter dropdown
+  categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+
   const categories = [...new Set(quotes.map(q => q.category))];
   categories.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    categorySelect.appendChild(option);
+    const option1 = document.createElement("option");
+    option1.value = cat;
+    option1.textContent = cat;
+    categorySelect.appendChild(option1);
+
+    const option2 = document.createElement("option");
+    option2.value = cat;
+    option2.textContent = cat;
+    categoryFilter.appendChild(option2);
   });
+
+  // Restore last selected filter
+  const savedFilter = localStorage.getItem("lastCategoryFilter");
+  if (savedFilter && [...categoryFilter.options].some(o => o.value === savedFilter)) {
+    categoryFilter.value = savedFilter;
+  }
+}
+
+function filterQuotes() {
+  const selected = categoryFilter.value;
+  localStorage.setItem("lastCategoryFilter", selected);
+
+  let filteredQuotes = selected === "all" ? quotes : quotes.filter(q => q.category === selected);
+
+  if (filteredQuotes.length === 0) {
+    quoteDisplay.innerHTML = "No quotes found in this category.";
+    return;
+  }
+
+  // Show all filtered quotes separated by line breaks
+  quoteDisplay.innerHTML = filteredQuotes
+    .map(q => `"${q.text}" — <strong>${q.category}</strong>`)
+    .join("<br><br>");
 }
 
 function restoreLastQuote() {
@@ -112,8 +157,10 @@ function restoreLastQuote() {
 }
 
 newQuoteBtn.addEventListener("click", showRandomQuote);
+categoryFilter.addEventListener("change", filterQuotes);
 
 window.addEventListener("DOMContentLoaded", () => {
   populateCategories();
   restoreLastQuote();
+  filterQuotes();
 });
