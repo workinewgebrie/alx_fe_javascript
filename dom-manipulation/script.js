@@ -12,7 +12,7 @@ function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
-function displayRandomQuote() {
+function showRandomQuote() {
   const selectedCategory = categorySelect.value;
   let filteredQuotes = quotes;
 
@@ -110,7 +110,7 @@ function restoreLastQuote() {
   }
 }
 
-newQuoteBtn.addEventListener("click", displayRandomQuote);
+newQuoteBtn.addEventListener("click", showRandomQuote);
 
 window.addEventListener("DOMContentLoaded", () => {
   populateCategories();
